@@ -13,6 +13,7 @@ import api from "../services/api";
 import CpuHistoryChart from "../components/charts/CpuHistoryChart";
 import MemoryHistoryChart from "../components/charts/MemoryHistoryChart";
 import DiskHistoryChart from "../components/charts/DiskHistoryChart";
+import NetworkHistoryChart from "../components/charts/NetworkHistoryChart";
 
 function MetricCard({ title, value, unit, icon: Icon, description }) {
   return (
@@ -196,6 +197,9 @@ export default function Dashboard() {
 
       <div className="mt-6">
         <DiskHistoryChart />
+      </div>
+      <div className="mt-6">
+        <NetworkHistoryChart />
       </div>
     </div>
   );

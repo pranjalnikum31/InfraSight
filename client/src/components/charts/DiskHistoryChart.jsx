@@ -8,7 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import api from "../../services/api";
+import { getDiskHistory } from "../../services/api";
 
 export default function DiskHistoryChart() {
   const [data, setData] = useState([]);
@@ -18,14 +18,8 @@ export default function DiskHistoryChart() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const end = Math.floor(Date.now() / 1000);
-        const start = end - 3600;
-
-        const response = await api.get("/metrics/history/disk", {
-          params: { start, end, step: "15s" },
-        });
-
-        const diskData = response.data.data?.[0]?.values || [];
+        const response = await getDiskHistory();
+        const diskData = response.data?.[0]?.values || [];
 
         setData(
           diskData.map((item) => ({

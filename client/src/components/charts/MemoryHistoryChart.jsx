@@ -8,7 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import api from "../../services/api";
+import { getMemoryHistory } from "../../services/api";
 
 export default function MemoryHistoryChart() {
   const [data, setData] = useState([]);
@@ -18,14 +18,9 @@ export default function MemoryHistoryChart() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const end = Math.floor(Date.now() / 1000);
-        const start = end - 3600;
+        const response = await getMemoryHistory();
 
-        const response = await api.get("/metrics/history/memory", {
-          params: { start, end, step: "15s" },
-        });
-
-        const memoryData = response.data.data?.[0]?.values || [];
+        const memoryData = response.data?.[0]?.values || [];
 
         setData(
           memoryData.map((item) => ({
