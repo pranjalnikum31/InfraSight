@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   Cpu,
@@ -9,7 +8,8 @@ import {
   Server,
 } from "lucide-react";
 
-import api from "../services/api";
+import { getInfrastructureHealth, getMetricsOverview } from "../services/api";
+
 import CpuHistoryChart from "../components/charts/CpuHistoryChart";
 import MemoryHistoryChart from "../components/charts/MemoryHistoryChart";
 import DiskHistoryChart from "../components/charts/DiskHistoryChart";
@@ -52,15 +52,19 @@ export default function Dashboard() {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [health, setHealth] = useState(null);
 
+  // Fetch live infrastructure metrics
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const response = await api.get("/metrics/overview");
+        const response = await getMetricsOverview();
 
-        if (!response.data.success) {
+        if (!response.success) {
           throw new Error("Unable to retrieve metrics");
         }
+
+        setMetrics(response.data);
 
         setMetrics(response.data.data);
         setError("");
@@ -75,6 +79,33 @@ export default function Dashboard() {
     fetchMetrics();
 
     const interval = setInterval(fetchMetrics, 15000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch infrastructure health
+  useEffect(() => {
+    const fetchHealth = async () => {
+      try {
+        const response = await getInfrastructureHealth();
+
+        const isConnected = response.data?.some(
+          (target) =>
+            target.job === "windows-machine" &&
+            Number(target.value) === 1
+        );
+
+        setHealth(Boolean(isConnected));
+      } catch (err) {
+        console.error("Infrastructure health error:", err);
+        setHealth(false);
+      }
+    };
+
+    fetchHealth();
+
+    const interval = setInterval(fetchHealth, 15000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -85,7 +116,11 @@ export default function Dashboard() {
   const sent = getMetricValue(metrics?.network?.sent);
 
   if (loading) {
-    return <div className="p-8 text-gray-500">Loading infrastructure metrics...</div>;
+    return (
+      <div className="p-8 text-gray-500">
+        Loading infrastructure metrics...
+      </div>
+    );
   }
 
   return (
@@ -100,9 +135,27 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-green-600">
-          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          Live monitoring
+        <div
+          className={`flex items-center gap-2 text-sm ${health === true
+              ? "text-green-600"
+              : health === false
+                ? "text-red-600"
+                : "text-gray-500"
+            }`}
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${health === true
+                ? "bg-green-500 animate-pulse"
+                : health === false
+                  ? "bg-red-500"
+                  : "bg-gray-400"
+              }`}
+          />
+          {health === true
+            ? "Live monitoring"
+            : health === false
+              ? "Monitoring disconnected"
+              : "Checking connection..."}
           <RefreshCw size={15} />
         </div>
       </div>
@@ -170,9 +223,11 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Monitored Infrastructure */}
       <div className="mt-8 bg-white border border-gray-200 rounded-xl p-6">
         <div className="flex items-center gap-3">
           <Server className="text-blue-600" size={22} />
+
           <div>
             <h3 className="font-semibold text-gray-900">
               Monitored Infrastructure
@@ -181,12 +236,25 @@ export default function Dashboard() {
               Windows Machine · host.docker.internal:9182
             </p>
           </div>
-          <span className="ml-auto text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
-            Connected
+
+          <span
+            className={`ml-auto text-xs font-medium px-3 py-1 rounded-full ${health === true
+              ? "text-green-600 bg-green-50"
+              : health === false
+                ? "text-red-600 bg-red-50"
+                : "text-gray-600 bg-gray-100"
+              }`}
+          >
+            {health === true
+              ? "Connected"
+              : health === false
+                ? "Disconnected"
+                : "Checking..."}
           </span>
         </div>
       </div>
 
+      {/* Historical Charts */}
       <div className="mt-8">
         <CpuHistoryChart />
       </div>
@@ -198,6 +266,7 @@ export default function Dashboard() {
       <div className="mt-6">
         <DiskHistoryChart />
       </div>
+
       <div className="mt-6">
         <NetworkHistoryChart />
       </div>

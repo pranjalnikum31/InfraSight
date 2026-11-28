@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -17,37 +17,41 @@ export default function NetworkHistoryChart() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const response = await getNetworkHistory();
+  const fetchHistory = useCallback(async () => {
+    try {
+      const response = await getNetworkHistory();
 
-        const receivedData =
-          response.data?.received?.data?.[0]?.values || [];
+      const receivedData =
+        response.data?.received?.data?.[0]?.values || [];
 
-        const sentData =
-          response.data?.sent?.data?.[0]?.values || [];
+      const sentData =
+        response.data?.sent?.data?.[0]?.values || [];
 
-        const formattedData = receivedData.map((item, index) => ({
-          timestamp: item.timestamp,
-          time: new Date(item.timestamp * 1000).toLocaleTimeString(),
-          received: Number((item.value / 1024).toFixed(2)),
-          sent: Number(
-            ((sentData[index]?.value || 0) / 1024).toFixed(2)
-          ),
-        }));
+      const formattedData = receivedData.map((item, index) => ({
+        timestamp: item.timestamp,
+        time: new Date(item.timestamp * 1000).toLocaleTimeString(),
+        received: Number((item.value / 1024).toFixed(2)),
+        sent: Number(
+          ((sentData[index]?.value || 0) / 1024).toFixed(2)
+        ),
+      }));
 
-        setData(formattedData);
-      } catch (err) {
-        console.error("Network history error:", err);
-        setError("Unable to load network history.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHistory();
+      setData(formattedData);
+    } catch (err) {
+      console.error("Network history error:", err);
+      setError("Unable to load network history.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+  useEffect(() => {
+    fetchHistory();
+
+    const interval = setInterval(fetchHistory, 60000);
+
+    return () => clearInterval(interval);
+  }, [fetchHistory]);
+
 
   if (loading) {
     return <p className="text-gray-500">Loading network history...</p>;

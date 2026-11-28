@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -15,29 +15,34 @@ export default function DiskHistoryChart() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const response = await getDiskHistory();
-        const diskData = response.data?.[0]?.values || [];
+  const fetchHistory = useCallback(async () => {
+    try {
+      const response = await getDiskHistory();
+      const diskData = response.data?.[0]?.values || [];
 
-        setData(
-          diskData.map((item) => ({
-            timestamp: item.timestamp,
-            time: new Date(item.timestamp * 1000).toLocaleTimeString(),
-            usage: Number(item.value.toFixed(2)),
-          }))
-        );
-      } catch (err) {
-        console.error("Disk history error:", err);
-        setError("Unable to load disk history.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      setData(
+        diskData.map((item) => ({
+          timestamp: item.timestamp,
+          time: new Date(item.timestamp * 1000).toLocaleTimeString(),
+          usage: Number(item.value.toFixed(2)),
+        }))
+      );
+    } catch (err) {
+      console.error("Disk history error:", err);
+      setError("Unable to load disk history.");
+    } finally {
+      setLoading(false);
+    }
+  },[]);
 
+  useEffect(()=>{
     fetchHistory();
-  }, []);
+    const interval = setInterval(fetchHistory, 60000);
+    return () => clearInterval(interval);
+  }, [fetchHistory]);
+
+
+
 
   if (loading) return <p className="text-gray-500">Loading disk history...</p>;
   if (error) return <p className="text-red-500">{error}</p>;

@@ -12,6 +12,7 @@ import {
   getDiskHistory,
   getNetworkHistory,
   getHistoricalOverview,
+  getInfrastructureHealth,
 } from "../controllers/metrics.controller.js";
 
 const router = express.Router();
@@ -27,5 +28,5 @@ router.get("/history/cpu", getCpuHistory);
 router.get("/history/memory", getMemoryHistory);
 router.get("/history/disk", getDiskHistory);
 router.get("/history/network", getNetworkHistory);
-
+router.get("/health", getInfrastructureHealth);
 export default router;

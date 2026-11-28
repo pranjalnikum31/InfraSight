@@ -255,3 +255,10 @@ const normalizeHistoryMetric = (result) => {
   }));
 };
 
+export const getInfrastructureHealthService = async () => {
+  const result = await queryPrometheus(
+    'up{job="windows-machine"}'
+  );
+
+  return normalizeMetric(result);
+};

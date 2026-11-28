@@ -46,4 +46,14 @@ export const getNetworkHistory = async () => {
 
   return response.data;
 };
+
+export const getInfrastructureHealth = async () => {
+  const response = await api.get("/metrics/health");
+  return response.data;
+};
+
+export const getMetricsOverview = async () => {
+  const response = await api.get("/metrics/overview");
+  return response.data;
+};
 export default api;

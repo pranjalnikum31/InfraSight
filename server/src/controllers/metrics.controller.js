@@ -10,6 +10,7 @@ import {
   getDiskHistoryService,
   getNetworkHistoryService,
   getHistoricalOverviewService,
+  getInfrastructureHealthService,
 } from "../services/metrics.service.js";
 
 const validateHistoryQuery = (req, res) => {
@@ -259,6 +260,21 @@ export const getHistoricalOverview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+export const getInfrastructureHealth = async (req, res) => {
+  try {
+    const data = await getInfrastructureHealthService();
+
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch infrastructure health",
     });
   }
 };
